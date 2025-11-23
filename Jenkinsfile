@@ -3,7 +3,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/your-username/admin-dash-devops-monorepo.git'  // Update with your repo
+                git branch: 'main', url: 'https://github.com/NotAnsar/admin-dash-devops-monorepo.git'
             }
         }
         stage('Setup Environment') {
