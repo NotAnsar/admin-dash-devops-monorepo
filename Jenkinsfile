@@ -8,6 +8,10 @@ pipeline {
         }
         stage('Setup Environment') {
             steps {
+                // Ensure directories exist and are writable
+                sh 'mkdir -p api front'
+                sh 'chmod -R 755 api front'
+                
                 withCredentials([
                     file(credentialsId: 'api_env_file', variable: 'API_ENV_FILE'),
                     file(credentialsId: 'front_env_file', variable: 'FRONT_ENV_FILE')
