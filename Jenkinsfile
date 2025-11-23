@@ -17,24 +17,12 @@ pipeline {
                 }
             }
         }
-        stage('Install Tools') {
-            steps {
-                sh '''
-                # Install Node.js
-                curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
-                apt-get install -y nodejs
-                # Install Docker Compose
-                curl -L "https://github.com/docker/compose/releases/download/v2.24.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-                chmod +x /usr/local/bin/docker-compose
-                '''
-            }
-        }
         stage('Build') {
             parallel {
                 stage('Build API') {
                     steps {
                         dir('api') {
-                            sh 'chmod +x mvnw && ./mvnw clean package -DskipTests'
+                            sh './mvnw clean package -DskipTests'
                         }
                     }
                 }
