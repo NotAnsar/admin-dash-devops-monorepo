@@ -1,11 +1,6 @@
 pipeline {
     agent any
     stages {
-        stage('Checkout') {
-            steps {
-                git branch: 'main', url: 'https://github.com/NotAnsar/admin-dash-devops-monorepo.git'
-            }
-        }
         stage('Setup Environment') {
             steps {
                 sh 'mkdir -p api front'
