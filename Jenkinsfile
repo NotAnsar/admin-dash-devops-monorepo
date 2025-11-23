@@ -8,7 +8,6 @@ pipeline {
         }
         stage('Setup Environment') {
             steps {
-                // Ensure directories exist and are writable
                 sh 'mkdir -p api front'
                 sh 'chmod -R 755 api front'
                 
@@ -19,6 +18,18 @@ pipeline {
                     sh 'cp $API_ENV_FILE api/.env'
                     sh 'cp $FRONT_ENV_FILE front/.env'
                 }
+            }
+        }
+        stage('Install Tools') {
+            steps {
+                sh '''
+                # Install Node.js
+                curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+                apt-get update && apt-get install -y nodejs
+                # Install Docker Compose
+                curl -L "https://github.com/docker/compose/releases/download/v2.24.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+                chmod +x /usr/local/bin/docker-compose
+                '''
             }
         }
         stage('Build') {
