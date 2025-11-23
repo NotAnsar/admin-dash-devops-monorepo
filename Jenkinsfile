@@ -3,7 +3,18 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/your-username/admin-dash-j2e.git'
+                git branch: 'main', url: 'https://github.com/your-username/admin-dash-devops-monorepo.git'  // Update with your repo
+            }
+        }
+        stage('Setup Environment') {
+            steps {
+                withCredentials([
+                    file(credentialsId: 'api_env_file', variable: 'API_ENV_FILE'),
+                    file(credentialsId: 'front_env_file', variable: 'FRONT_ENV_FILE')
+                ]) {
+                    sh 'cp $API_ENV_FILE api/.env'
+                    sh 'cp $FRONT_ENV_FILE front/.env'
+                }
             }
         }
         stage('Build') {
@@ -49,6 +60,9 @@ pipeline {
         }
     }
     post {
+        always {
+            sh 'docker-compose down || true'
+        }
         success {
             echo 'CI successful. Ready for deployment.'
         }
