@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: oravadb
+      POSTGRES_USER: oravadb_owner
+      POSTGRES_PASSWORD: npg_xLByv3DPNCr6
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+  api:
+    build: ./api
+    ports:
+      - '8080:8080'
+    env_file:
+      - ./api/.env
+    environment:
+      DATABASE_URL: jdbc:postgresql://db:5432/oravadb
+      DB_USERNAME: oravadb_owner
+      DB_PASSWORD: npg_xLByv3DPNCr6
+    depends_on:
+      - db
+  frontend:
+    build: ./front
+    ports:
+      - '3000:3000'
+    env_file:
+      - ./front/.env
+    environment:
+      NEXT_PUBLIC_BACKEND_URL: http://api:8080 # Connect to API service
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:
