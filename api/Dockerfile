@@ -10,6 +10,9 @@ COPY .mvn .mvn
 # Copy source
 COPY src src
 
+# Make mvnw executable and fix line endings
+RUN chmod +x mvnw && sed -i 's/\r$//' mvnw
+
 # Build the application
 RUN ./mvnw clean package -DskipTests
 

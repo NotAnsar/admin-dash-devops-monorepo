@@ -347,11 +347,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Docker
-.dockerignore
-
-# Jenkins
-Jenkinsfile
 
 # Helm
-helm/
+# helm/
