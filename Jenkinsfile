@@ -1,6 +1,16 @@
 pipeline {
     agent any
+    tools {
+       nodejs 'NodeJS22' 
+       dockerTool 'docker'
+    }  
     stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/NotAnsar/admin-dash-devops-monorepo'
+            }
+        }
+        
         stage('Setup Environment') {
             steps {
                 sh 'mkdir -p api front'
@@ -15,7 +25,7 @@ pipeline {
                 }
             }
         }
-    
+        
         stage('Build') {
             parallel {
                 stage('Build API') {
@@ -34,6 +44,7 @@ pipeline {
                 }
             }
         }
+
         stage('Test') {
             parallel {
                 stage('Test API') {
@@ -52,18 +63,20 @@ pipeline {
                 }
             }
         }
+
         stage('Prepare for Deployment') {
-            steps {
-                sh 'docker-compose build'
+            parallel {
+                stage('Build API Image') {
+                    steps {
+                        sh 'docker build -t api ./api'
+                    }
+                }
+                stage('Build Frontend Image') {
+                    steps {
+                        sh 'docker build -t frontend ./front'
+                    }
+                }
             }
-        }
-    }
-    post {
-        always {
-            sh 'docker-compose down || true'
-        }
-        success {
-            echo 'CI successful. Ready for deployment.'
         }
     }
 }
