@@ -51,6 +51,25 @@ pipeline {
             }
         }
 
+        stage('Test') {
+            parallel {
+                stage('Test API') {
+                    steps {
+                        dir('api') {
+                            sh './mvnw test'
+                        }
+                    }
+                }
+                stage('Test Frontend') {
+                    steps {
+                        dir('front') {
+                            sh 'npm test'
+                        }
+                    }
+                }
+            }
+        }
+
         stage('SonarQube Analysis') {
             parallel {
                 stage('Analyze API') {
@@ -91,25 +110,7 @@ pipeline {
                 }
             }
         }
-
-        stage('Test') {
-            parallel {
-                stage('Test API') {
-                    steps {
-                        dir('api') {
-                            sh './mvnw test'
-                        }
-                    }
-                }
-                stage('Test Frontend') {
-                    steps {
-                        dir('front') {
-                            sh 'npm test'
-                        }
-                    }
-                }
-            }
-        }
+        
 
         stage('Build Docker Images') {
             parallel {
@@ -136,6 +137,9 @@ pipeline {
         }
         failure {
             echo 'Pipeline failed!'
+        }
+        always {
+            cleanWs()
         }
     }
 }
