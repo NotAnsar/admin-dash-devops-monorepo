@@ -8,6 +8,8 @@ pipeline {
     
     environment {
         SONAR_SCANNER_HOME = tool 'SonarQubeScanner'
+        DOCKER_REGISTRY = 'docker.io/notansar'  
+        IMAGE_TAG = "${BUILD_NUMBER}"
     }
     
     stages {
@@ -110,18 +112,29 @@ pipeline {
                 }
             }
         }
-        
 
-        stage('Build Docker Images') {
+        stage('Build & Push Docker Images') {
             parallel {
-                stage('Build API Image') {
+                stage('API Image') {
                     steps {
-                        sh 'docker build -t api ./api'
+                        withCredentials([usernamePassword(credentialsId: 'docker-registry-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                            sh 'docker login -u $DOCKER_USER -p $DOCKER_PASS'
+                            sh """
+                                docker build -t ${DOCKER_REGISTRY}/api:${IMAGE_TAG} ./api
+                                docker push ${DOCKER_REGISTRY}/api:${IMAGE_TAG}
+                            """
+                        }
                     }
                 }
-                stage('Build Frontend Image') {
+                stage('Frontend Image') {
                     steps {
-                        sh 'docker build -t frontend ./front'
+                        withCredentials([usernamePassword(credentialsId: 'docker-registry-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                            sh 'docker login -u $DOCKER_USER -p $DOCKER_PASS'
+                            sh """
+                                docker build -t ${DOCKER_REGISTRY}/frontend:${IMAGE_TAG} ./front
+                                docker push ${DOCKER_REGISTRY}/frontend:${IMAGE_TAG}
+                            """
+                        }
                     }
                 }
             }
@@ -131,14 +144,13 @@ pipeline {
     post {
         success {
             echo 'Pipeline completed successfully!'
-            echo "SonarQube Reports:"
-            echo "API: http://localhost:9000/dashboard?id=admin-dashboard-api"
-            echo "Frontend: http://localhost:9000/dashboard?id=admin-dash-frontend"
+            echo "Docker Images: ${DOCKER_REGISTRY}/api:${IMAGE_TAG}, ${DOCKER_REGISTRY}/frontend:${IMAGE_TAG}"
         }
         failure {
             echo 'Pipeline failed!'
         }
         always {
+            sh 'docker logout ${DOCKER_REGISTRY} || true'
             cleanWs()
         }
     }
