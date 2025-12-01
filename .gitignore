@@ -348,5 +348,8 @@ yarn-error.log*
 next-env.d.ts
 
 
+# sonnarqube
+.scannerwork/
+
 # Helm
 # helm/

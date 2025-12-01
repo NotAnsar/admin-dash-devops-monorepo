@@ -1,9 +1,15 @@
 pipeline {
     agent any
+    
     tools {
        nodejs 'NodeJS22' 
        dockerTool 'docker'
-    }  
+    }
+    
+    environment {
+        SONAR_SCANNER_HOME = tool 'SonarQubeScanner'
+    }
+    
     stages {
         stage('Checkout') {
             steps {
@@ -45,6 +51,47 @@ pipeline {
             }
         }
 
+        stage('SonarQube Analysis') {
+            parallel {
+                stage('Analyze API') {
+                    steps {
+                        dir('api') {
+                            withSonarQubeEnv('SonarQube') {
+                                sh '''
+                                    ./mvnw sonar:sonar \
+                                      -Dsonar.projectKey=admin-dashboard-api \
+                                      -Dsonar.projectName="Admin Dashboard API"
+                                '''
+                            }
+                        }
+                    }
+                }
+                stage('Analyze Frontend') {
+                    steps {
+                        dir('front') {
+                            withSonarQubeEnv('SonarQube') {
+                                sh '''
+                                    ${SONAR_SCANNER_HOME}/bin/sonar-scanner \
+                                      -Dsonar.projectKey=admin-dash-frontend \
+                                      -Dsonar.projectName="Admin Dashboard Frontend" \
+                                      -Dsonar.sources=app,components,lib,actions,api \
+                                      -Dsonar.exclusions=**/node_modules/**,**/*.test.*,**/*.spec.*,.next/**,**/__tests__/**
+                                '''
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 2, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
         stage('Test') {
             parallel {
                 stage('Test API') {
@@ -64,7 +111,7 @@ pipeline {
             }
         }
 
-        stage('Prepare for Deployment') {
+        stage('Build Docker Images') {
             parallel {
                 stage('Build API Image') {
                     steps {
@@ -77,6 +124,18 @@ pipeline {
                     }
                 }
             }
+        }
+    }
+    
+    post {
+        success {
+            echo 'Pipeline completed successfully!'
+            echo "SonarQube Reports:"
+            echo "API: http://localhost:9000/dashboard?id=admin-dashboard-api"
+            echo "Frontend: http://localhost:9000/dashboard?id=admin-dash-frontend"
+        }
+        failure {
+            echo 'Pipeline failed!'
         }
     }
 }
