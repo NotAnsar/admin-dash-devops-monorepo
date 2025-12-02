@@ -116,17 +116,17 @@ pipeline {
 
         stage('Build & Push Docker Images') {
             parallel {
-                // stage('API Image') {
-                //     steps {
-                //         withCredentials([usernamePassword(credentialsId: 'docker-registry-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                //             sh 'docker login -u $DOCKER_USER -p $DOCKER_PASS'
-                //             sh """
-                //                 docker build -t ${DOCKER_REGISTRY}/api:${IMAGE_TAG} ./api
-                //                 docker push ${DOCKER_REGISTRY}/api:${IMAGE_TAG}
-                //             """
-                //         }
-                //     }
-                // }
+                stage('API Image') {
+                    steps {
+                        withCredentials([usernamePassword(credentialsId: 'docker-registry-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                            sh 'docker login -u $DOCKER_USER -p $DOCKER_PASS'
+                            sh """
+                                docker build -t ${DOCKER_REGISTRY}/api:${IMAGE_TAG} ./api
+                                docker push ${DOCKER_REGISTRY}/api:${IMAGE_TAG}
+                            """
+                        }
+                    }
+                }
                 stage('Frontend Image') {
                     steps {
                         withCredentials([usernamePassword(credentialsId: 'docker-registry-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
@@ -145,6 +145,9 @@ pipeline {
     post {
         success {
             echo 'Pipeline completed successfully!'
+            echo "SonarQube Reports:"
+            echo "API: http://localhost:9000/dashboard?id=admin-dashboard-api"
+            echo "Frontend: http://localhost:9000/dashboard?id=admin-dash-frontend"
             echo "Docker Images: ${DOCKER_REGISTRY}/api:${IMAGE_TAG}, ${DOCKER_REGISTRY}/frontend:${IMAGE_TAG}"
         }
         failure {
