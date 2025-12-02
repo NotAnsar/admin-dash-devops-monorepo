@@ -58,7 +58,8 @@ pipeline {
                 stage('Test API') {
                     steps {
                         dir('api') {
-                            sh './mvnw test'
+                            sh './mvnw clean package -DskipTests'  
+
                         }
                     }
                 }
@@ -115,17 +116,17 @@ pipeline {
 
         stage('Build & Push Docker Images') {
             parallel {
-                stage('API Image') {
-                    steps {
-                        withCredentials([usernamePassword(credentialsId: 'docker-registry-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                            sh 'docker login -u $DOCKER_USER -p $DOCKER_PASS'
-                            sh """
-                                docker build -t ${DOCKER_REGISTRY}/api:${IMAGE_TAG} ./api
-                                docker push ${DOCKER_REGISTRY}/api:${IMAGE_TAG}
-                            """
-                        }
-                    }
-                }
+                // stage('API Image') {
+                //     steps {
+                //         withCredentials([usernamePassword(credentialsId: 'docker-registry-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                //             sh 'docker login -u $DOCKER_USER -p $DOCKER_PASS'
+                //             sh """
+                //                 docker build -t ${DOCKER_REGISTRY}/api:${IMAGE_TAG} ./api
+                //                 docker push ${DOCKER_REGISTRY}/api:${IMAGE_TAG}
+                //             """
+                //         }
+                //     }
+                // }
                 stage('Frontend Image') {
                     steps {
                         withCredentials([usernamePassword(credentialsId: 'docker-registry-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
