@@ -347,6 +347,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# k8s
+*.yaml
+
 
 # sonnarqube
 .scannerwork/

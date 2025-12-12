@@ -114,29 +114,69 @@ pipeline {
             }
         }
 
-        stage('Build & Push Docker Images') {
-            parallel {
-                stage('API Image') {
-                    steps {
-                        withCredentials([usernamePassword(credentialsId: 'docker-registry-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                            sh 'docker login -u $DOCKER_USER -p $DOCKER_PASS'
-                            sh """
-                                docker build -t ${DOCKER_REGISTRY}/api:${IMAGE_TAG} ./api
-                                docker push ${DOCKER_REGISTRY}/api:${IMAGE_TAG}
-                            """
-                        }
-                    }
+        // stage('Build & Push Docker Images') {
+        //     parallel {
+        //         stage('API Image') {
+        //             steps {
+        //                 withCredentials([usernamePassword(credentialsId: 'docker-registry-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+        //                     sh 'docker login -u $DOCKER_USER -p $DOCKER_PASS'
+        //                     sh """
+        //                         docker build -t ${DOCKER_REGISTRY}/api:${IMAGE_TAG} ./api
+        //                         docker push ${DOCKER_REGISTRY}/api:${IMAGE_TAG}
+        //                     """
+        //                 }
+        //             }
+        //         }
+        //         stage('Frontend Image') {
+        //             steps {
+        //                 withCredentials([usernamePassword(credentialsId: 'docker-registry-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+        //                     sh 'docker login -u $DOCKER_USER -p $DOCKER_PASS'
+        //                     sh """
+        //                         docker build -t ${DOCKER_REGISTRY}/frontend:${IMAGE_TAG} ./front
+        //                         docker push ${DOCKER_REGISTRY}/frontend:${IMAGE_TAG}
+        //                     """
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
+
+                stage('Build Docker Images') {
+            steps {
+                script {
+                    // Build API image
+                    sh """
+                        docker build -t ${DOCKER_REGISTRY}/api:${IMAGE_TAG} -t ${DOCKER_REGISTRY}/api:latest ./api
+                    """
+                    
+                    // Build Frontend image
+                    sh """
+                        docker build -t ${DOCKER_REGISTRY}/frontend:${IMAGE_TAG} -t ${DOCKER_REGISTRY}/frontend:latest ./front
+                    """
                 }
-                stage('Frontend Image') {
-                    steps {
-                        withCredentials([usernamePassword(credentialsId: 'docker-registry-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                            sh 'docker login -u $DOCKER_USER -p $DOCKER_PASS'
-                            sh """
-                                docker build -t ${DOCKER_REGISTRY}/frontend:${IMAGE_TAG} ./front
-                                docker push ${DOCKER_REGISTRY}/frontend:${IMAGE_TAG}
-                            """
-                        }
-                    }
+            }
+        }
+
+        stage('Push API Image') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'docker-registry-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh 'docker login -u $DOCKER_USER -p $DOCKER_PASS'
+                    sh """
+                        docker push ${DOCKER_REGISTRY}/api:${IMAGE_TAG}
+                        docker push ${DOCKER_REGISTRY}/api:latest
+                    """
+                }
+            }
+        }
+
+        stage('Push Frontend Image') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'docker-registry-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh 'docker login -u $DOCKER_USER -p $DOCKER_PASS'
+                    sh """
+                        docker push ${DOCKER_REGISTRY}/frontend:${IMAGE_TAG}
+                        docker push ${DOCKER_REGISTRY}/frontend:latest
+                    """
                 }
             }
         }

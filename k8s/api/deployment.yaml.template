@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: <NAMESPACE>
+  labels:
+    app: api
+spec:
+  replicas: <API_REPLICAS>
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      containers:
+        - name: api
+          image: <API_IMAGE>
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - secretRef:
+                name: api-secrets
+          resources:
+            requests:
+              memory: '512Mi'
+              cpu: '250m'
+            limits:
+              memory: '1Gi'
+              cpu: '500m'
+          startupProbe:
+            tcpSocket:
+              port: 8080
+            failureThreshold: 30
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: 8080
+            periodSeconds: 5
