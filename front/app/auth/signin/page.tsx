@@ -14,7 +14,7 @@ export default function page() {
 				<div className='flex gap-[6px] items-center'>
 					<Logo className='text-foreground w-[26px] h-auto -rotate-45' />
 					<h4 className='text-[28px] font-serif font-medium tracking-wide'>
-						Orava
+						Orava 2123123123
 					</h4>
 				</div>
 
