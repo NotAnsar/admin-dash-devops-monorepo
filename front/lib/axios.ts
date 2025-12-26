@@ -3,7 +3,7 @@ import { deleteSession, getUserSession } from './session';
 
 // Create axios instance
 const axiosInstance = axios.create({
-	baseURL: process.env.NEXT_PUBLIC_BACKEND_URL,
+	baseURL: process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL,
 	headers: { 'Content-Type': 'application/json' },
 	withCredentials: true,
 });

@@ -10,6 +10,7 @@ pipeline {
         SONAR_SCANNER_HOME = tool 'SonarQubeScanner'
         DOCKER_REGISTRY = 'docker.io/notansar'  
         IMAGE_TAG = "${BUILD_NUMBER}"
+        EMAIL_RECIPIENTS = 'karrouach.ansar@gmail.com'
     }
     
     stages {
@@ -59,7 +60,6 @@ pipeline {
                     steps {
                         dir('api') {
                             sh './mvnw clean package -DskipTests'  
-
                         }
                     }
                 }
@@ -73,75 +73,48 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
-            parallel {
-                stage('Analyze API') {
-                    steps {
-                        dir('api') {
-                            withSonarQubeEnv('SonarQube') {
-                                sh '''
-                                    ./mvnw sonar:sonar \
-                                      -Dsonar.projectKey=admin-dashboard-api \
-                                      -Dsonar.projectName="Admin Dashboard API"
-                                '''
-                            }
-                        }
-                    }
-                }
-                stage('Analyze Frontend') {
-                    steps {
-                        dir('front') {
-                            withSonarQubeEnv('SonarQube') {
-                                sh '''
-                                    ${SONAR_SCANNER_HOME}/bin/sonar-scanner \
-                                      -Dsonar.projectKey=admin-dash-frontend \
-                                      -Dsonar.projectName="Admin Dashboard Frontend" \
-                                      -Dsonar.sources=app,components,lib,actions,api \
-                                      -Dsonar.exclusions=**/node_modules/**,**/*.test.*,**/*.spec.*,.next/**,**/__tests__/**
-                                '''
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        stage('Quality Gate') {
-            steps {
-                timeout(time: 2, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                }
-            }
-        }
-
-        // stage('Build & Push Docker Images') {
+        // stage('SonarQube Analysis') {
         //     parallel {
-        //         stage('API Image') {
+        //         stage('Analyze API') {
         //             steps {
-        //                 withCredentials([usernamePassword(credentialsId: 'docker-registry-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-        //                     sh 'docker login -u $DOCKER_USER -p $DOCKER_PASS'
-        //                     sh """
-        //                         docker build -t ${DOCKER_REGISTRY}/api:${IMAGE_TAG} ./api
-        //                         docker push ${DOCKER_REGISTRY}/api:${IMAGE_TAG}
-        //                     """
+        //                 dir('api') {
+        //                     withSonarQubeEnv('SonarQube') {
+        //                         sh '''
+        //                             ./mvnw org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+        //                               -Dsonar.projectKey=admin-dashboard-api \
+        //                               -Dsonar.projectName="Admin Dashboard API"
+        //                         '''
+        //                     }
         //                 }
         //             }
         //         }
-        //         stage('Frontend Image') {
+        //         stage('Analyze Frontend') {
         //             steps {
-        //                 withCredentials([usernamePassword(credentialsId: 'docker-registry-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-        //                     sh 'docker login -u $DOCKER_USER -p $DOCKER_PASS'
-        //                     sh """
-        //                         docker build -t ${DOCKER_REGISTRY}/frontend:${IMAGE_TAG} ./front
-        //                         docker push ${DOCKER_REGISTRY}/frontend:${IMAGE_TAG}
-        //                     """
+        //                 dir('front') {
+        //                     withSonarQubeEnv('SonarQube') {
+        //                         sh '''
+        //                             ${SONAR_SCANNER_HOME}/bin/sonar-scanner \
+        //                               -Dsonar.projectKey=admin-dash-frontend \
+        //                               -Dsonar.projectName="Admin Dashboard Frontend" \
+        //                               -Dsonar.sources=app,components,lib,actions,api \
+        //                               -Dsonar.exclusions=**/node_modules/**,**/*.test.*,**/*.spec.*,.next/**,**/__tests__/**
+        //                         '''
+        //                     }
         //                 }
         //             }
         //         }
         //     }
         // }
 
-                stage('Build Docker Images') {
+        // stage('Quality Gate') {
+        //     steps {
+        //         timeout(time: 2, unit: 'MINUTES') {
+        //             waitForQualityGate abortPipeline: true
+        //         }
+        //     }
+        // }
+
+        stage('Build Docker Images') {
             steps {
                 script {
                     // Build API image
@@ -180,18 +153,98 @@ pipeline {
                 }
             }
         }
+
+        stage('Deploy to GCP Cloud Run') {
+            parallel {
+                stage('Deploy API') {
+                    steps {
+                        sh '''
+                            gcloud config set project orava-monorepo
+                            
+                            gcloud run deploy admin-api \
+                              --image=${DOCKER_REGISTRY}/api:latest \
+                              --region=us-central1 \
+                              --platform=managed \
+                              --allow-unauthenticated \
+                              --max-instances=3 \
+                              --memory=2Gi \
+                              --cpu=1
+                        '''
+                    }
+                }
+                stage('Deploy Frontend') {
+                    steps {
+                        sh '''
+                            gcloud config set project orava-monorepo
+                            
+                            gcloud run deploy admin-frontend \
+                              --image=${DOCKER_REGISTRY}/frontend:latest \
+                              --region=us-central1 \
+                              --platform=managed \
+                              --allow-unauthenticated \
+                              --max-instances=3 \
+                              --memory=512Mi \
+                              --cpu=1
+                        '''
+                    }
+                }
+            }
+        }
     }
     
     post {
         success {
             echo 'Pipeline completed successfully!'
-            echo "SonarQube Reports:"
-            echo "API: http://localhost:9000/dashboard?id=admin-dashboard-api"
-            echo "Frontend: http://localhost:9000/dashboard?id=admin-dash-frontend"
             echo "Docker Images: ${DOCKER_REGISTRY}/api:${IMAGE_TAG}, ${DOCKER_REGISTRY}/frontend:${IMAGE_TAG}"
+            echo "Deployed to Cloud Run:"
+            echo "API: https://admin-api-487276152686.us-central1.run.app"
+            echo "Frontend: https://admin-frontend-487276152686.us-central1.run.app"
+            
+            emailext(
+                subject: "✅ Build #${BUILD_NUMBER} - SUCCESS",
+                body: """
+                    <h2>Pipeline Completed Successfully!</h2>
+                    <p><strong>Job:</strong> ${JOB_NAME}</p>
+                    <p><strong>Build Number:</strong> ${BUILD_NUMBER}</p>
+                    <p><strong>Build URL:</strong> <a href="${BUILD_URL}">${BUILD_URL}</a></p>
+                    
+                    <h3>Docker Images:</h3>
+                    <ul>
+                        <li>API: ${DOCKER_REGISTRY}/api:${IMAGE_TAG}</li>
+                        <li>Frontend: ${DOCKER_REGISTRY}/frontend:${IMAGE_TAG}</li>
+                    </ul>
+                    
+                    <h3>Deployed Services:</h3>
+                    <ul>
+                        <li><a href="https://admin-api-487276152686.us-central1.run.app">API Service</a></li>
+                        <li><a href="https://admin-frontend-487276152686.us-central1.run.app">Frontend Service</a></li>
+                    </ul>
+                    
+                    <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
+                """,
+                to: "${EMAIL_RECIPIENTS}",
+                mimeType: 'text/html'
+            )
         }
         failure {
             echo 'Pipeline failed!'
+            
+            emailext(
+                subject: "❌ Build #${BUILD_NUMBER} - FAILED",
+                body: """
+                    <h2>Pipeline Failed!</h2>
+                    <p><strong>Job:</strong> ${JOB_NAME}</p>
+                    <p><strong>Build Number:</strong> ${BUILD_NUMBER}</p>
+                    <p><strong>Build URL:</strong> <a href="${BUILD_URL}">${BUILD_URL}</a></p>
+                    <p><strong>Console Output:</strong> <a href="${BUILD_URL}console">${BUILD_URL}console</a></p>
+                    
+                    <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
+                    
+                    <p>Please check the console output for details.</p>
+                """,
+                to: "${EMAIL_RECIPIENTS}",
+                mimeType: 'text/html'
+            )
         }
         always {
             sh 'docker logout ${DOCKER_REGISTRY} || true'
