@@ -30,7 +30,7 @@ function PendingButton() {
 			) : (
 				<LogOut className='h-[18px] w-auto ' strokeWidth='1.8' />
 			)}
-			<p className='text-[15px]'>Sign Out</p>
+			<p className='text-[15px]'>Sign Out 1232</p>
 		</Button>
 	);
 }
