@@ -73,46 +73,46 @@ pipeline {
             }
         }
 
-        // stage('SonarQube Analysis') {
-        //     parallel {
-        //         stage('Analyze API') {
-        //             steps {
-        //                 dir('api') {
-        //                     withSonarQubeEnv('SonarQube') {
-        //                         sh '''
-        //                             ./mvnw org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
-        //                               -Dsonar.projectKey=admin-dashboard-api \
-        //                               -Dsonar.projectName="Admin Dashboard API"
-        //                         '''
-        //                     }
-        //                 }
-        //             }
-        //         }
-        //         stage('Analyze Frontend') {
-        //             steps {
-        //                 dir('front') {
-        //                     withSonarQubeEnv('SonarQube') {
-        //                         sh '''
-        //                             ${SONAR_SCANNER_HOME}/bin/sonar-scanner \
-        //                               -Dsonar.projectKey=admin-dash-frontend \
-        //                               -Dsonar.projectName="Admin Dashboard Frontend" \
-        //                               -Dsonar.sources=app,components,lib,actions,api \
-        //                               -Dsonar.exclusions=**/node_modules/**,**/*.test.*,**/*.spec.*,.next/**,**/__tests__/**
-        //                         '''
-        //                     }
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
+        stage('SonarQube Analysis') {
+            parallel {
+                stage('Analyze API') {
+                    steps {
+                        dir('api') {
+                            withSonarQubeEnv('SonarQube') {
+                                sh '''
+                                    ./mvnw org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+                                      -Dsonar.projectKey=admin-dashboard-api \
+                                      -Dsonar.projectName="Admin Dashboard API"
+                                '''
+                            }
+                        }
+                    }
+                }
+                stage('Analyze Frontend') {
+                    steps {
+                        dir('front') {
+                            withSonarQubeEnv('SonarQube') {
+                                sh '''
+                                    ${SONAR_SCANNER_HOME}/bin/sonar-scanner \
+                                      -Dsonar.projectKey=admin-dash-frontend \
+                                      -Dsonar.projectName="Admin Dashboard Frontend" \
+                                      -Dsonar.sources=app,components,lib,actions,api \
+                                      -Dsonar.exclusions=**/node_modules/**,**/*.test.*,**/*.spec.*,.next/**,**/__tests__/**
+                                '''
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
-        // stage('Quality Gate') {
-        //     steps {
-        //         timeout(time: 2, unit: 'MINUTES') {
-        //             waitForQualityGate abortPipeline: true
-        //         }
-        //     }
-        // }
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 2, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
 
         stage('Build Docker Images') {
             steps {
