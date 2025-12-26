@@ -119,12 +119,12 @@ pipeline {
                 script {
                     // Build API image
                     sh """
-                        docker build -t ${DOCKER_REGISTRY}/api:${IMAGE_TAG} -t ${DOCKER_REGISTRY}/api:latest ./api
+                        docker build --no-cache -t ${DOCKER_REGISTRY}/api:${IMAGE_TAG} -t ${DOCKER_REGISTRY}/api:latest ./api
                     """
                     
                     // Build Frontend image
                     sh """
-                        docker build -t ${DOCKER_REGISTRY}/frontend:${IMAGE_TAG} -t ${DOCKER_REGISTRY}/frontend:latest ./front
+                        docker build --no-cache -t ${DOCKER_REGISTRY}/frontend:${IMAGE_TAG} -t ${DOCKER_REGISTRY}/frontend:latest ./front
                     """
                 }
             }
