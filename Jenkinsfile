@@ -162,7 +162,7 @@ pipeline {
                             gcloud config set project orava-monorepo
                             
                             gcloud run deploy admin-api \
-                              --image=${DOCKER_REGISTRY}/api:latest \
+                              --image=${DOCKER_REGISTRY}/api:${IMAGE_TAG} \
                               --region=us-central1 \
                               --platform=managed \
                               --allow-unauthenticated \
@@ -178,7 +178,7 @@ pipeline {
                             gcloud config set project orava-monorepo
                             
                             gcloud run deploy admin-frontend \
-                              --image=${DOCKER_REGISTRY}/frontend:latest \
+                              --image=${DOCKER_REGISTRY}/frontend:${IMAGE_TAG} \
                               --region=us-central1 \
                               --platform=managed \
                               --allow-unauthenticated \
