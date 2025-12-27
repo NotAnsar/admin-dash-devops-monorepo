@@ -35,38 +35,19 @@ pipeline {
             }
         }
         
-        stage('Build') {
-            parallel {
-                stage('Build API') {
-                    steps {
-                        dir('api') {
-                            sh './mvnw clean package -DskipTests'
-                        }
-                    }
-                }
-                stage('Build Frontend') {
-                    steps {
-                        dir('front') {
-                            sh 'npm install && npm run build'
-                        }
-                    }
-                }
-            }
-        }
-
         stage('Test') {
             parallel {
                 stage('Test API') {
                     steps {
                         dir('api') {
-                            sh './mvnw clean package -DskipTests'  
+                            sh './mvnw test'  
                         }
                     }
                 }
                 stage('Test Frontend') {
                     steps {
                         dir('front') {
-                            sh 'npm test'
+                            sh 'npm install && npm test'
                         }
                     }
                 }
@@ -119,12 +100,12 @@ pipeline {
                 script {
                     // Build API image
                     sh """
-                        docker build --no-cache -t ${DOCKER_REGISTRY}/api:${IMAGE_TAG} -t ${DOCKER_REGISTRY}/api:latest ./api
+                        docker build -t ${DOCKER_REGISTRY}/api:${IMAGE_TAG} -t ${DOCKER_REGISTRY}/api:latest ./api
                     """
                     
                     // Build Frontend image
                     sh """
-                        docker build --no-cache -t ${DOCKER_REGISTRY}/frontend:${IMAGE_TAG} -t ${DOCKER_REGISTRY}/frontend:latest ./front
+                        docker build -t ${DOCKER_REGISTRY}/frontend:${IMAGE_TAG} -t ${DOCKER_REGISTRY}/frontend:latest ./front
                     """
                 }
             }
