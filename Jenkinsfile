@@ -169,7 +169,9 @@ pipeline {
                           --max-instances=3 \
                           --memory=2Gi \
                           --cpu=1 \
-                          --add-cloudsql-instances=orava-monorepo:us-central1:admin-dashboard-db \
+                          --timeout=300 \
+                          --set-secrets=DATABASE_URL=DATABASE_URL:latest,DB_USERNAME=DB_USERNAME:latest,DB_PASSWORD=DB_PASSWORD:latest,JWT_SECRET=JWT_SECRET:latest,MAIL_HOST=MAIL_HOST:latest,MAIL_PORT=MAIL_PORT:latest,MAIL_USERNAME=MAIL_USERNAME:latest,MAIL_PASSWORD=MAIL_PASSWORD:latest,AWS_ACCESS_KEY_ID=AWS_ACCESS_KEY_ID:latest,AWS_SECRET_KEY=AWS_SECRET_KEY:latest,AWS_REGION=AWS_REGION:latest,AWS_S3_BUCKET=AWS_S3_BUCKET:latest \
+                          --update-env-vars=JWT_EXPIRATION=86400000,FRONTEND_URL=https://admin-frontend-487276152686.us-central1.run.app \
                           --quiet
                     '''
                     echo "Waiting 30 seconds before next deployment to avoid rate limiting..."
@@ -193,6 +195,7 @@ pipeline {
                           --max-instances=3 \
                           --memory=512Mi \
                           --cpu=1 \
+                          --timeout=300 \
                           --quiet
                     '''
                 }
