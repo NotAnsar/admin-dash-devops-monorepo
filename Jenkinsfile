@@ -168,7 +168,8 @@ pipeline {
                               --allow-unauthenticated \
                               --max-instances=3 \
                               --memory=2Gi \
-                              --cpu=1
+                              --cpu=1 \
+                              --add-cloudsql-instances=orava-monorepo:us-central1:admin-dashboard-db
                         '''
                     }
                 }
