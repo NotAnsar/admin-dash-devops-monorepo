@@ -154,40 +154,47 @@ pipeline {
             }
         }
 
-        stage('Deploy to GCP Cloud Run') {
-            parallel {
-                stage('Deploy API') {
-                    steps {
-                        sh '''
-                            gcloud config set project orava-monorepo
-                            
-                            gcloud run deploy admin-api \
-                              --image=${DOCKER_REGISTRY}/api:${IMAGE_TAG} \
-                              --region=us-central1 \
-                              --platform=managed \
-                              --allow-unauthenticated \
-                              --max-instances=3 \
-                              --memory=2Gi \
-                              --cpu=1 \
-                              --add-cloudsql-instances=orava-monorepo:us-central1:admin-dashboard-db
-                        '''
-                    }
+        stage('Deploy API to Cloud Run') {
+            steps {
+                script {
+                    echo "Deploying API to Cloud Run..."
+                    sh '''
+                        gcloud config set project orava-monorepo
+                        
+                        gcloud run deploy admin-api \
+                          --image=${DOCKER_REGISTRY}/api:${IMAGE_TAG} \
+                          --region=us-central1 \
+                          --platform=managed \
+                          --allow-unauthenticated \
+                          --max-instances=3 \
+                          --memory=2Gi \
+                          --cpu=1 \
+                          --add-cloudsql-instances=orava-monorepo:us-central1:admin-dashboard-db \
+                          --quiet
+                    '''
+                    echo "Waiting 30 seconds before next deployment to avoid rate limiting..."
+                    sleep 30
                 }
-                stage('Deploy Frontend') {
-                    steps {
-                        sh '''
-                            gcloud config set project orava-monorepo
-                            
-                            gcloud run deploy admin-frontend \
-                              --image=${DOCKER_REGISTRY}/frontend:${IMAGE_TAG} \
-                              --region=us-central1 \
-                              --platform=managed \
-                              --allow-unauthenticated \
-                              --max-instances=3 \
-                              --memory=512Mi \
-                              --cpu=1
-                        '''
-                    }
+            }
+        }
+
+        stage('Deploy Frontend to Cloud Run') {
+            steps {
+                script {
+                    echo "Deploying Frontend to Cloud Run..."
+                    sh '''
+                        gcloud config set project orava-monorepo
+                        
+                        gcloud run deploy admin-frontend \
+                          --image=${DOCKER_REGISTRY}/frontend:${IMAGE_TAG} \
+                          --region=us-central1 \
+                          --platform=managed \
+                          --allow-unauthenticated \
+                          --max-instances=3 \
+                          --memory=512Mi \
+                          --cpu=1 \
+                          --quiet
+                    '''
                 }
             }
         }
