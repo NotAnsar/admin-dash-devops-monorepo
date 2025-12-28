@@ -67,7 +67,7 @@ export default function UserNav({ user }: { user: User }) {
 						<form action={logout} className='w-full relative'>
 							<button type='submit' className='p-2 w-full text-left flex'>
 								<LogOutIcon className='w-4 h-auto mr-2' />
-								Sign out
+								Sign out 123
 							</button>
 						</form>
 					</DropdownMenuItem>
